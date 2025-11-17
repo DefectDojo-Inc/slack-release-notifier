@@ -1,0 +1,33 @@
+name: "Post GitHub Release to Slack"
+description: "Fetch a release and send its title & body to Slack."
+author: "DefectDojo Maintainers"
+
+inputs:
+  slack_webhook_url:
+    description: "Slack webhook URL"
+    required: true
+  release_url:
+    description: "Full GitHub release URL"
+    required: true
+  github_token:
+    description: "GitHub Personal Access Token for API requests"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+
+    - name: Install dependencies
+      run: python -m pip install --upgrade pip && pip install requests
+      shell: bash
+
+    - name: Run Slack notifier
+      run: LOG_LEVEL="INFO" python3 ${{ github.action_path }}/notify_release.py
+      shell: bash
+      env:
+        SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook_url }}
+        RELEASE_URL: ${{ inputs.release_url }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
