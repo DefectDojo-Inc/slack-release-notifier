@@ -146,7 +146,10 @@ def main():
         fail(f"GitHub API error {res.status_code}: {res.text}")
 
     release = res.json()
-    title = release.get("name") or tag
+    if repo == "django-DefectDojo":
+        title = "Open-Source DD" + (release.get("name") or tag)
+    else:
+        title = f"{repo}+" + (release.get("name") or tag)
     body_md = release.get("body") or ""
 
     converted_body = convert_markdown(body_md)
