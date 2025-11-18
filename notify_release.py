@@ -147,7 +147,7 @@ def main():
 
     release = res.json()
     if repo == "django-DefectDojo":
-        title = "Open-Source DefectDojo" + (release.get("name") or tag)
+        title = "Open-Source DefectDojo " + (release.get("name") or tag)
     else:
         title = f"{repo} " + (release.get("name") or tag)
     body_md = release.get("body") or ""
