@@ -17,6 +17,16 @@ def fail(msg: str):
 # Markdown → Slack converters
 # ---------------------------
 
+def escape_mrkdwn(text: str) -> str:
+    """Make text literal in Slack mrkdwn.
+
+    Release notes repeat PR titles, which contributors write and can edit after merge.
+    Unescaped, `<!channel>` pings the channel and `<url|text>` posts a disguised link.
+    Slack's control characters are only &, < and >; & goes first so entities stay single.
+    """
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def convert_headers(md: str) -> str:
     def repl(match):
         header_text = match.group(2).strip()
@@ -25,8 +35,10 @@ def convert_headers(md: str) -> str:
 
 
 def convert_links(md: str) -> str:
+    # Runs on escaped text, so neither part can hold < or >. Only plain http(s) URLs
+    # become links: a | in the URL would let it choose its own label.
     return re.sub(
-        r"\[(.*?)\]\((.*?)\)",
+        r"\[(.*?)\]\((https?://[^\s|]*?)\)",
         lambda m: f"<{m.group(2)}|{m.group(1)}>",
         md,
     )
@@ -61,6 +73,7 @@ def convert_tables(md: str) -> str:
 
 
 def convert_markdown(md: str) -> str:
+    md = escape_mrkdwn(md)
     md = convert_headers(md)
     md = convert_links(md)
     md = convert_checkboxes(md)
@@ -93,7 +106,7 @@ def build_slack_blocks(release_url: str, title: str, markdown_text: str):
     blocks = []
     blocks.append({
         "type": "section",
-        "text": {"type": "mrkdwn", "text": f"*<{release_url}|{title}>*"}
+        "text": {"type": "mrkdwn", "text": f"*<{release_url}|{escape_mrkdwn(title)}>*"}
     })
     blocks.append({"type": "divider"})
     blocks.append({
